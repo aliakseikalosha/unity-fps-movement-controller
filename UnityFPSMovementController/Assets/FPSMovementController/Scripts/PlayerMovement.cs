@@ -83,8 +83,9 @@ namespace FPSMovmentController
         private GameObject cam;
         Vector3 moveInput = Vector3.zero;
         Vector2 _mouseAbsolute, _smoothMouse, targetDirection, targetCharacterDirection;
-        private float coyoteTimeCounter, jumpBufferCounter, startJumpTime, endJumpTime;
-        private bool wantingToJump = false, wantingToCrouch = false, wantingToSprint = false, jumpCooldownOver = true;
+        private float startJumpTime, endJumpTime;
+        private Counter coyoteTimeCounter, jumpBufferCounter, jumpCounter;
+        private bool wantingToJump = false, wantingToCrouch = false, wantingToSprint = false;
 
         private void Awake()
         {
@@ -100,6 +101,11 @@ namespace FPSMovmentController
             // Set target direction for the character body to its inital state.
             targetCharacterDirection = transform.localRotation.eulerAngles;
             userInput.OnToggleCursor += ToggleCursoreLock;
+
+
+            coyoteTimeCounter = new Counter(() => areWeGrounded, coyoteTime);
+            jumpBufferCounter = new Counter(() => wantingToJump, jumpBuffer);
+            jumpCounter = new Counter(() => false, jumpCooldown);
         }
 
         private void Update()
@@ -117,6 +123,70 @@ namespace FPSMovmentController
             wantingToCrouch = userInput.Crouch;
             // Sprint key
             wantingToSprint = userInput.IsSprint;
+        }
+
+        private void FixedUpdate()
+        {
+            // Lock cursor handling
+            Cursor.lockState = lockCursor ? CursorLockMode.Locked : CursorLockMode.None;
+
+            // Double check if we are on the ground or not (Changes current speed if true)
+            // --- QUICK EXPLINATION --- 
+            // transform.position.y - transform.localScale.y + 0.1f
+            // This puts the start of the ray 0.1f above the bottom of the player
+            // We then shoot a ray 0.15f down, this exists the player with 0.5f to hit objects
+            // Removing this +- of 0.1f and having it shoot directly under the player can skip the ground as sometimes the capsules bottom clips through the ground
+            if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y - transform.localScale.y + 0.1f, transform.position.z), Vector3.down, 0.15f))
+            {
+                HandleHitGround();
+            }
+
+            // Sprinting
+            if (areWeGrounded && !areWeCrouching)
+            {
+                currentSpeed = wantingToSprint ? sprintMoveSpeed : walkMoveSpeed;
+            }
+
+            // Crouching 
+            // Can be simplified to Crouch((wantingToCrouch && jumpCrouching)); though the bellow is more readable
+            Crouch(wantingToCrouch && jumpCrouching);
+            UpdateTimers();
+
+            // If the coyote timer has not run out and our jump buffer has not run out and we our cool down (canJump) is now over
+            if ((coyoteTimeCounter.Running || areWeGrounded) && jumpBufferCounter.Running && jumpCounter.Ended && wantingToJump)
+            {
+                rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+                rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
+
+                areWeGrounded = false;
+                currentSpeed = jumpMoveSpeed;
+                endJumpTime = Time.time + jumpTime;
+
+                // Wait jumpCooldown (1f = 1 second) then run the JumpCoolDownCountdown() void
+                jumpCounter.Set();
+            }
+            else if (wantingToJump && !areWeGrounded && endJumpTime > Time.time)
+            {
+                // Hold down space for a further jump (until the timer runs out)
+                rb.AddForce(Vector3.up * jumpAccel, ForceMode.Acceleration);
+            }
+
+            // WSAD movement
+            moveInput = moveInput.normalized;
+            Vector3 forwardVel = transform.forward * currentSpeed * moveInput.z;
+            Vector3 horizontalVel = transform.right * currentSpeed * moveInput.x;
+            rb.linearVelocity = horizontalVel + forwardVel + new Vector3(0, rb.linearVelocity.y, 0);
+
+            //Extra gravity for more nicer jumping
+            rb.AddForce(new Vector3(0, -extraGravity, 0), ForceMode.Impulse);
+        }
+
+        private void UpdateTimers()
+        {
+            // Coyote timer (When the player leaves the ground, start counting down from the set value coyoteTime)
+            // This allows players to jump late. After they have left 
+            coyoteTimeCounter.Update();
+            jumpBufferCounter.Update();
         }
 
 
@@ -160,90 +230,6 @@ namespace FPSMovmentController
 
             var yRotation = Quaternion.AngleAxis(_mouseAbsolute.x, Vector3.up);
             transform.localRotation = yRotation * targetCharacterOrientation;
-        }
-
-        private void FixedUpdate()
-        {
-            // Lock cursor handling
-            Cursor.lockState = lockCursor ? CursorLockMode.Locked : CursorLockMode.None;
-
-            // Double check if we are on the ground or not (Changes current speed if true)
-            // --- QUICK EXPLINATION --- 
-            // transform.position.y - transform.localScale.y + 0.1f
-            // This puts the start of the ray 0.1f above the bottom of the player
-            // We then shoot a ray 0.15f down, this exists the player with 0.5f to hit objects
-            // Removing this +- of 0.1f and having it shoot directly under the player can skip the ground as sometimes the capsules bottom clips through the ground
-            if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y - transform.localScale.y + 0.1f, transform.position.z), Vector3.down, 0.15f))
-            {
-                HandleHitGround();
-            }
-
-            // Sprinting
-            if (areWeGrounded && !areWeCrouching)
-            {
-                currentSpeed = wantingToSprint ? sprintMoveSpeed : walkMoveSpeed;
-            }
-
-            // Crouching 
-            // Can be simplified to Crouch((wantingToCrouch && jumpCrouching)); though the bellow is more readable
-            Crouch(wantingToCrouch && jumpCrouching);
-
-            // Coyote timer (When the player leaves the ground, start counting down from the set value coyoteTime)
-            // This allows players to jump late. After they have left 
-            if (areWeGrounded)
-            {
-                coyoteTimeCounter = coyoteTime;
-            }
-            else
-            {
-                coyoteTimeCounter -= Time.deltaTime;
-            }
-
-            // Jump buffer timer (When the player leaves the ground, start counting down from the set value jumpBuffer)
-            // This will "buffer" the input and allow for early space presses to be valid and no longer ignored
-            if (wantingToJump)
-            {
-                jumpBufferCounter = jumpBuffer;
-            }
-            else
-            {
-                jumpBufferCounter -= Time.deltaTime;
-            }
-
-            // If the coyote timer has not run out and our jump buffer has not run out and we our cool down (canJump) is now over
-            if (coyoteTimeCounter > 0f && jumpBufferCounter > 0f && jumpCooldownOver)
-            {
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-                rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
-
-                jumpCooldownOver = false;
-                areWeGrounded = false;
-                jumpBufferCounter = 0f;
-                currentSpeed = jumpMoveSpeed;
-                endJumpTime = Time.time + jumpTime;
-
-                // Wait jumpCooldown (1f = 1 second) then run the JumpCoolDownCountdown() void
-                Invoke(nameof(JumpCoolDownCountdown), jumpCooldown);
-            }
-            else if (wantingToJump && !areWeGrounded && endJumpTime > Time.time)
-            {
-                // Hold down space for a further jump (until the timer runs out)
-                rb.AddForce(Vector3.up * jumpAccel, ForceMode.Acceleration);
-            }
-
-            // WSAD movement
-            moveInput = moveInput.normalized;
-            Vector3 forwardVel = transform.forward * currentSpeed * moveInput.z;
-            Vector3 horizontalVel = transform.right * currentSpeed * moveInput.x;
-            rb.linearVelocity = horizontalVel + forwardVel + new Vector3(0, rb.linearVelocity.y, 0);
-
-            //Extra gravity for more nicer jumping
-            rb.AddForce(new Vector3(0, -extraGravity, 0), ForceMode.Impulse);
-        }
-
-        private void JumpCoolDownCountdown()
-        {
-            jumpCooldownOver = true;
         }
 
         // Crouch handling
