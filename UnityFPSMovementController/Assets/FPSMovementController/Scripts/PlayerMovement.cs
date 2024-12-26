@@ -5,7 +5,7 @@
 namespace FPSMovmentController
 {
 
-    [AddComponentMenu("Player Movement and Camera Controller")]
+    [AddComponentMenu("FPSMovmentController/Player")]
     public class PlayerMovement : MonoBehaviour
     {
         [Header("Camera Settings")]
@@ -62,7 +62,7 @@ namespace FPSMovmentController
         [Tooltip("Fall quicker")]
         [SerializeField] float extraGravity = 0.1f;
         [Tooltip("The tag that will be considered the ground")]
-        [SerializeField] string groundTag = "Ground";
+        [SerializeField] string groundTag = Constants.GroundTag;
         //----------------------------------------------------
         [Header("Input")]
         [SerializeField] UserInputProxy userInput;

@@ -7,9 +7,8 @@ using UnityEngine;
 // Its just for setup and is not used during gameplay
 namespace FPSMovmentController
 {
-
     [CustomEditor(typeof(PlayerMovement))]
-    public class PlayerSetup : Editor
+    public class PlayerControllerEditor : Editor
     {
         private readonly string dialogTitle = "Player Movement Setup v1.1", dialogYes = "Yeah", dialogNo = "No thanks";
 
@@ -35,12 +34,12 @@ namespace FPSMovmentController
 
                 if (EditorUtility.DisplayDialog(
                         dialogTitle,
-                        "Would you like me to create a \"Ground\" tag for you?",
+                        $"Would you like me to create a \"{Constants.GroundTag}\" tag for you?",
                         dialogYes,
                         dialogNo
                 ))
                 {
-                    CreateTag("Ground");
+                    PlayerSetup.AddGroundTag();
                 }
 
                 pmvmt.SetupCharacter();
@@ -55,9 +54,20 @@ namespace FPSMovmentController
         }
 
 
+    }
+
+    public static class PlayerSetup
+    {
+        [MenuItem("FPSMovmentController/Add Ground Tag")]
+        public static void AddGroundTag()
+        {
+            CreateTag(Constants.GroundTag);
+        }
+
+
         // Mashup of code from ctwheels & Leslie-Young by B0N3head 
         // Dw about understanding this, it's just a tool for creating tags in editor for unity
-        public void CreateTag(string tagName)
+        public static void CreateTag(string tagName)
         {
             SerializedObject tagM = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
             SerializedProperty tagsP = tagM.FindProperty("tags");
