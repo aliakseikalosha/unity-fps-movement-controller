@@ -104,7 +104,7 @@ namespace FPSMovmentController
 
 
             coyoteTimeCounter = new Counter(() => areWeGrounded, coyoteTime);
-            jumpBufferCounter = new Counter(() => wantingToJump, jumpBuffer);
+            jumpBufferCounter = new Counter(() => !wantingToJump, jumpBuffer);
             jumpCounter = new Counter(() => false, jumpCooldown);
         }
 
@@ -139,6 +139,10 @@ namespace FPSMovmentController
             if (Physics.Raycast(new Vector3(transform.position.x, transform.position.y - transform.localScale.y + 0.1f, transform.position.z), Vector3.down, 0.15f))
             {
                 HandleHitGround();
+            }
+            else
+            {
+                areWeGrounded = false;
             }
 
             // Sprinting
@@ -179,6 +183,14 @@ namespace FPSMovmentController
 
             //Extra gravity for more nicer jumping
             rb.AddForce(new Vector3(0, -extraGravity, 0), ForceMode.Impulse);
+        }
+
+        private void OnGUI()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Box($"{nameof(coyoteTimeCounter)}:{(coyoteTimeCounter.Running ? "Running" : "Ended")}");
+            GUILayout.Box($"{nameof(jumpBufferCounter)}:{(jumpBufferCounter.Running ? "Running" : "Ended")}");
+            GUILayout.EndHorizontal();
         }
 
         private void UpdateTimers()

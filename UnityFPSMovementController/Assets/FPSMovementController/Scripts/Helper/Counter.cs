@@ -8,6 +8,8 @@ namespace FPSMovmentController
         private readonly Func<bool> checkForReset;
         private readonly float time;
         private float endTime;
+        private bool wasStoped = false;
+
         public bool Ended => endTime < Time.time;
         public bool Running => !Ended;
 
@@ -21,6 +23,7 @@ namespace FPSMovmentController
         public void Set()
         {
             endTime = Time.time + time;
+            wasStoped = false;
         }
 
         public void Update()
@@ -29,7 +32,7 @@ namespace FPSMovmentController
             {
                 Stop();
             }
-            else if(Ended)
+            else if(Ended && wasStoped)
             {
                 Set();
             }
@@ -38,6 +41,7 @@ namespace FPSMovmentController
         public void Stop()
         {
             endTime = Time.time;
+            wasStoped = true;
         }
     }
 }
