@@ -5,7 +5,7 @@ using UnityEngine;
 
 // This script, although readable was not created out to be super readable for beginners.
 // Its just for setup and is not used during gameplay
-namespace FPSMovmentController
+namespace FPSMovementController
 {
     [CustomEditor(typeof(PlayerMovement))]
     public class PlayerControllerEditor : Editor
@@ -58,7 +58,7 @@ namespace FPSMovmentController
 
     public static class PlayerSetup
     {
-        [MenuItem("FPSMovmentController/Add Ground Tag")]
+        [MenuItem("FPSMovementController/Add Ground Tag")]
         public static void AddGroundTag()
         {
             CreateTag(Constants.GroundTag);

@@ -1,4 +1,4 @@
-﻿namespace FPSMovmentController
+﻿namespace FPSMovementController
 {
     public static class Constants
     {

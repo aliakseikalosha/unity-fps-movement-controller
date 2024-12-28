@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-namespace FPSMovmentController
+namespace FPSMovementController
 {
     public class OldUserInput : UserInputProxy
     {

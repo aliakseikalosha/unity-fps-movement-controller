@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace FPSMovmentController
+namespace FPSMovementController
 {
     public abstract class UserInputProxy : MonoBehaviour
     {

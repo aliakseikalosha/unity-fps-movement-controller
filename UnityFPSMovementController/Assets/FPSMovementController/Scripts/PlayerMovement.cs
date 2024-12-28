@@ -2,10 +2,10 @@
 // By B0N3head 
 // All yours, use this script however you see fit, feel free to give credit if you want
 
-namespace FPSMovmentController
+namespace FPSMovementController
 {
 
-    [AddComponentMenu("FPSMovmentController/Player")]
+    [AddComponentMenu("FPSMovementController/Player")]
     public class PlayerMovement : MonoBehaviour
     {
         [Header("Camera Settings")]
@@ -84,12 +84,12 @@ namespace FPSMovmentController
         Vector3 moveInput = Vector3.zero;
         Vector2 _mouseAbsolute, _smoothMouse, targetDirection, targetCharacterDirection;
         private float startJumpTime, endJumpTime;
-        private Counter coyoteTimeCounter, jumpBufferCounter, jumpCounter;
+        private Counter coyoteTimeCounter, jumpBufferCounter, jumpAllowCounter;
         private bool wantingToJump = false, wantingToCrouch = false, wantingToSprint = false;
 
         private void Awake()
         {
-            // Just set rb to the rigidbody of the gameobject containing this script
+            // Just set rb to the rigidbody of the GameObject containing this script
             rb = gameObject.GetComponent<Rigidbody>();
             // Try find our camera amongst the child objects
             cam = gameObject.transform.Find(cameraName).gameObject;
@@ -98,14 +98,15 @@ namespace FPSMovmentController
 
             // Set target direction to the camera's initial orientation.
             targetDirection = transform.localRotation.eulerAngles;
-            // Set target direction for the character body to its inital state.
+            // Set target direction for the character body to its initial state.
             targetCharacterDirection = transform.localRotation.eulerAngles;
-            userInput.OnToggleCursor += ToggleCursoreLock;
+            userInput.OnToggleCursor += ToggleCursorLock;
 
-
+            // Coyote timer (When the player leaves the ground, start counting down from the set value coyoteTime)
+            // This allows players to jump late. After they have left 
             coyoteTimeCounter = new Counter(() => areWeGrounded, coyoteTime);
             jumpBufferCounter = new Counter(() => !wantingToJump, jumpBuffer);
-            jumpCounter = new Counter(() => false, jumpCooldown);
+            jumpAllowCounter = new Counter(() => false, jumpCooldown);
         }
 
         private void Update()
@@ -157,7 +158,7 @@ namespace FPSMovmentController
             UpdateTimers();
 
             // If the coyote timer has not run out and our jump buffer has not run out and we our cool down (canJump) is now over
-            if ((coyoteTimeCounter.Running || areWeGrounded) && jumpBufferCounter.Running && jumpCounter.Ended && wantingToJump)
+            if ((coyoteTimeCounter.Running || areWeGrounded) && jumpBufferCounter.Running && jumpAllowCounter.Ended && wantingToJump)
             {
                 rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
                 rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
@@ -166,8 +167,7 @@ namespace FPSMovmentController
                 currentSpeed = jumpMoveSpeed;
                 endJumpTime = Time.time + jumpTime;
 
-                // Wait jumpCooldown (1f = 1 second) then run the JumpCoolDownCountdown() void
-                jumpCounter.Set();
+                jumpAllowCounter.Set();
             }
             else if (wantingToJump && !areWeGrounded && endJumpTime > Time.time)
             {
@@ -185,24 +185,14 @@ namespace FPSMovmentController
             rb.AddForce(new Vector3(0, -extraGravity, 0), ForceMode.Impulse);
         }
 
-        private void OnGUI()
-        {
-            GUILayout.BeginHorizontal();
-            GUILayout.Box($"{nameof(coyoteTimeCounter)}:{(coyoteTimeCounter.Running ? "Running" : "Ended")}");
-            GUILayout.Box($"{nameof(jumpBufferCounter)}:{(jumpBufferCounter.Running ? "Running" : "Ended")}");
-            GUILayout.EndHorizontal();
-        }
-
         private void UpdateTimers()
         {
-            // Coyote timer (When the player leaves the ground, start counting down from the set value coyoteTime)
-            // This allows players to jump late. After they have left 
             coyoteTimeCounter.Update();
             jumpBufferCounter.Update();
         }
 
 
-        public void ToggleCursoreLock()
+        public void ToggleCursorLock()
         {
             lockCursor = !lockCursor;
         }
@@ -281,26 +271,33 @@ namespace FPSMovmentController
             }
         }
 
-        // Ground check
-        //****** make sure whatever you want to be the ground in your game matches the tag set in the script
-        private void OnCollisionEnter(Collision other)
+        /// <summary>
+        /// Unity method that is called when player <c>Rigidbody</c> collided with anything.<br/>
+        /// Current use is:<br/>
+        /// Ground check make sure whatever you want to be the ground in your game matches the tag set in the script<br/>
+        /// </summary>
+        /// <param name="collisionObject">Object with information about collision</param>
+        private void OnCollisionEnter(Collision collisionObject)
         {
-            if (other.gameObject.CompareTag(groundTag))
+            if (collisionObject.gameObject.CompareTag(groundTag))
             {
-                HandleHitGround();
+               HandleHitGround();
             }
         }
 
-        // This is separated in its own void as this code needs to be run on two separate occasions, saves copy pasting code
-        // Just double checking if we are crouching and setting the speed accordingly 
-        public void HandleHitGround()
+        /// <summary>
+        /// Reset state after player step on the ground  
+        /// </summary>
+        private void HandleHitGround()
         {
             currentSpeed = areWeCrouching ? crouchMoveSpeed : walkMoveSpeed;
 
             areWeGrounded = true;
         }
 
-        // Dw about understanding this, it's just the code for setting up the player character 
+        /// <summary>
+        /// Used to setup all components and initial setting
+        /// </summary>
         public void SetupCharacter()
         {
             gameObject.tag = "Player";
