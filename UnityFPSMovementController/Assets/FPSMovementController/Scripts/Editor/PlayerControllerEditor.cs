@@ -67,6 +67,10 @@ namespace FPSMovementController
 
         // Mashup of code from ctwheels & Leslie-Young by B0N3head 
         // Dw about understanding this, it's just a tool for creating tags in editor for unity
+        /// <summary>
+        /// Add tag, if missing, to the unity editor
+        /// </summary>
+        /// <param name="tagName">Name of the tag</param>
         public static void CreateTag(string tagName)
         {
             SerializedObject tagM = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);

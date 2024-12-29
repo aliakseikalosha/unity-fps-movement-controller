@@ -10,7 +10,7 @@ namespace FPSMovementController
         public abstract Vector2 Look { get; protected set; }
         public abstract bool Jump { get; protected set; }
         public abstract bool Crouch { get; protected set; }
-        public abstract bool IsSprint { get; protected set; }
+        public abstract bool Sprint { get; protected set; }
 
         protected void RaiseOnToggleCursor()
         {

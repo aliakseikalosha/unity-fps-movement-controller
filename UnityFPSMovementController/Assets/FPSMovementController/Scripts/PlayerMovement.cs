@@ -4,7 +4,6 @@
 
 namespace FPSMovementController
 {
-
     [AddComponentMenu("FPSMovementController/Player")]
     public class PlayerMovement : MonoBehaviour
     {
@@ -108,7 +107,9 @@ namespace FPSMovementController
             jumpBufferCounter = new Counter(() => !wantingToJump, jumpBuffer);
             jumpAllowCounter = new Counter(() => false, jumpCooldown);
         }
-
+        /// <summary>
+        /// Unity update run each frame
+        /// </summary>
         private void Update()
         {
             // Update the camera pos
@@ -123,9 +124,11 @@ namespace FPSMovementController
             // Crouch key
             wantingToCrouch = userInput.Crouch;
             // Sprint key
-            wantingToSprint = userInput.IsSprint;
+            wantingToSprint = userInput.Sprint;
         }
-
+        /// <summary>
+        ///  Unity Physic run each physics frame
+        /// </summary>
         private void FixedUpdate()
         {
             // Lock cursor handling
@@ -196,7 +199,9 @@ namespace FPSMovementController
         {
             lockCursor = !lockCursor;
         }
-
+        /// <summary>
+        /// Update Camera rotation
+        /// </summary>
         public void CameraUpdate()
         {
             // Allow the script to clamp based on a desired target value.
@@ -234,7 +239,10 @@ namespace FPSMovementController
             transform.localRotation = yRotation * targetCharacterOrientation;
         }
 
-        // Crouch handling
+        /// <summary>
+        /// Handle Crouch input
+        /// </summary>
+        /// <param name="crouch">set to true if crouching</param>
         private void Crouch(bool crouch)
         {
             areWeCrouching = crouch;
