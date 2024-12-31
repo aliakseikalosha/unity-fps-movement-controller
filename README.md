@@ -65,11 +65,18 @@ These are all configurable from the editor. **(don't require any coding)**
 
 <br/>
 
-## How to setup the character
+# How to setup the character
 
-1. Download and add the files to your assets folder
+## Using unity package
 
-<img src="https://raw.githubusercontent.com/B0N3head/unity-fps-movement-controller/main/readmeAssets/1.PNG" width="600" />
+1. Export unity package, from release.
+2. User Prefab or setup as before.
+
+## Using manual approach
+
+1. Download and add the folder to your assets folder
+
+<img src="https://raw.githubusercontent.com/aliakseikalosha/unity-fps-movement-controller/refs/heads/main/readmeAssets/1.PNG" width="600" />
 
 2. Add a capsule to your scene
 

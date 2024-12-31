@@ -289,7 +289,7 @@ namespace FPSMovementController
         {
             if (collisionObject.gameObject.CompareTag(groundTag))
             {
-               HandleHitGround();
+                HandleHitGround();
             }
         }
 
@@ -308,7 +308,7 @@ namespace FPSMovementController
         /// </summary>
         public void SetupCharacter()
         {
-            gameObject.tag = "Player";
+            gameObject.tag = Constants.PlayerTag;
             if (!gameObject.GetComponent<Rigidbody>())
             {
                 Rigidbody rb = gameObject.AddComponent(typeof(Rigidbody)) as Rigidbody;
@@ -318,7 +318,14 @@ namespace FPSMovementController
             {
                 Debug.Log("Rigidbody already exists");
             }
-
+            if (userInput == null)
+            {
+                if ((userInput = gameObject.GetComponentInChildren<UserInputProxy>()) == null)
+                {
+                    userInput = gameObject.AddComponent<OldUserInput>();
+                    Debug.LogWarning($"Add Old User Input to player, I using new one you will need to add a {typeof(UserInputProxy)} implementation and set it as {nameof(userInput)}.");
+                }
+            }
             if (!gameObject.transform.Find("Camera"))
             {
                 Vector3 old = transform.position;
